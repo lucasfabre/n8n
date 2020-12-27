@@ -324,6 +324,11 @@ export class Spotify implements INodeType {
 						value: 'delete',
 						description: 'Remove tracks from a playlist by track and playlist URI or ID.',
 					},
+					{
+						name: `Create a new Playlist`,
+						value: 'createUserPlaylist',
+						description: `Create a user's playlist`,
+					},
 				],
 				default: 'add',
 				description: 'The operation to perform.',
@@ -369,6 +374,63 @@ export class Spotify implements INodeType {
 				},
 				placeholder: 'spotify:track:0xE4LEFzSNGsz1F6kvXsHU',
 				description: `The track's Spotify URI or its ID. The track to add/delete from the playlist.`,
+			},
+			{
+				displayName: 'Playlist Name',
+				name: 'playlistName',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'playlist',
+						],
+						operation: [
+							'createUserPlaylist',
+						],
+					},
+				},
+				placeholder: 'name',
+				description: `The created playlist name`,
+			},
+			{
+				displayName: 'Playlist Description',
+				name: 'playlistDescription',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'playlist',
+						],
+						operation: [
+							'createUserPlaylist',
+						],
+					},
+				},
+				placeholder: 'description',
+				description: `The created playlist description`,
+			},
+			{
+				displayName: 'Public',
+				name: 'shouldPlaylistBePublic',
+				type: 'boolean',
+				default: 'false',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'playlist',
+						],
+						operation: [
+							'createUserPlaylist',
+						],
+					},
+				},
+				placeholder: 'should the playlist be public',
+				description: `Define if the created playlist is public or private`,
 			},
 			// -----------------------------------------------------
 			//         Track Operations
@@ -780,6 +842,23 @@ export class Spotify implements INodeType {
 
 							responseData = responseData.items;
 						}
+					} else if(operation === 'createUserPlaylist') {
+						requestMethod = 'POST';
+						const name = this.getNodeParameter('playlistName', i) as string;
+						const description = this.getNodeParameter('playlistDescription', i) as string;
+						const isPublic = this.getNodeParameter('shouldPlaylistBePublic', i) as boolean;
+
+						const userInfos = await spotifyApiRequest.call(this, "GET", "/me", body, qs);
+
+						body = {
+							name: name,
+							description: description,
+							public: isPublic
+						};
+
+						endpoint = `/users/${userInfos.id}/playlists`;
+						responseData = await spotifyApiRequest.call(this, requestMethod, endpoint, body, qs);
+
 					}
 			// -----------------------------
 			//      Track Operations
